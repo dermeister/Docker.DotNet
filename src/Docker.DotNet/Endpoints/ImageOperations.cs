@@ -62,7 +62,7 @@ namespace Docker.DotNet
             return this._client.MakeRequestForStreamAsync(this._client.NoErrorHandlers, HttpMethod.Post, "build", queryParameters, data, cancellationToken);
         }
 
-        public Task BuildImageFromDockerfileAsync(ImageBuildParameters parameters, Stream contents, IEnumerable<AuthConfig> authConfigs, IDictionary<string, string> headers, IProgress<JSONMessage> progress, CancellationToken cancellationToken = default)
+        public async Task BuildImageFromDockerfileAsync(ImageBuildParameters parameters, Stream contents, IEnumerable<AuthConfig> authConfigs, IDictionary<string, string> headers, IProgress<JSONMessage> progress, CancellationToken cancellationToken = default)
         {
             if (contents == null)
             {
@@ -89,15 +89,18 @@ namespace Docker.DotNet
                     customHeaders[key] = headers[key];
                 }
             }
-
-            return StreamUtil.MonitorResponseForMessagesAsync(
-                this._client.MakeRequestForRawResponseAsync(
-                    httpMethod,
-                    "build",
-                    queryParameters,
-                    data,
-                    customHeaders,
-                    cancellationToken),
+            
+            Task<HttpResponseMessage> responseTask = this._client.MakeRequestForRawResponseAsync(
+                httpMethod,
+                "build",
+                queryParameters,
+                data,
+                customHeaders,
+                cancellationToken);
+            HttpResponseMessage response = await responseTask;
+            await this._client.HandleIfErrorResponseAsync(response.StatusCode, response);
+            await StreamUtil.MonitorResponseForMessagesAsync(
+                responseTask,
                 this._client,
                 cancellationToken,
                 progress
