@@ -101,7 +101,7 @@ namespace Docker.DotNet
                     handler = new ManagedHandler();
                     break;
 
-#if (NETSTANDARD1_6 || NETSTANDARD2_0)
+#if (NETSTANDARD1_6 || NETSTANDARD2_0 || NET6_0)
                 case "unix":
                     var pipeString = uri.LocalPath;
                     handler = new ManagedHandler(async (string host, int port, CancellationToken cancellationToken) =>
